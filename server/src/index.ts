@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import playerRoutes from './routes/playerroutes.js';
+import serverRoutes from './routes/serverroutes.js';   
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ app.use(express.json());
 
 // Routen einbinden
 app.use('/api/players', playerRoutes);
+app.use('/api/server', serverRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
