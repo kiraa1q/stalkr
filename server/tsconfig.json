@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",          /* Wichtig für "type": "module" */
+    "moduleResolution": "NodeNext",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": false  /* Schaltet den strengen Check aus, der den Fehler warf */
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
