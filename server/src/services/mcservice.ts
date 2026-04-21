@@ -11,3 +11,10 @@ export const getMcData = async (command: string) => {
   await rcon.end();
   return response;
 };
+
+export const getOnlinePlayers = async () => {
+  const rawStatus = await getMcData("list");
+  // Logik: Alles nach dem Doppelpunkt nehmen und bei Kommas trennen
+  const playerString = rawStatus.split(":")[1] || "";
+  return playerString.split(",").map(name => name.trim()).filter(name => name !== "");
+};

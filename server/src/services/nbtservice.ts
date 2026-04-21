@@ -1,24 +1,34 @@
 import nbt from 'prismarine-nbt';
 import fs from 'fs';
+import dotenv from 'dotenv';
 
 export const getPlayerInventory = async (uuid: string) => {
-  // Pfad anpassen (lokal auf dem Pi oder absoluter Pfad)
-  const path = `/path/to/server/world/playerdata/${uuid}.dat`;
+  const path = process.env.MC_WORLD_PATH + `/playerdata/${uuid}.dat`;
   
-  if (!fs.existsSync(path)) {
-    throw new Error(`Spieler-Datei für UUID ${uuid} nicht gefunden.`);
-  }
+  if (!fs.existsSync(path)) throw new Error("Playerdata nicht gefunden");
 
   const fileData = fs.readFileSync(path);
-  
-  // 1. NBT-Daten parsen
   const result = await nbt.parse(fileData);
-  
-  // 2. nbt.simplify() braucht nur den 'parsed'-Teil des Ergebnisses.
-  // Wir nutzen hier 'as any', um den strengen Typ-Check an dieser Stelle
-  // zu umgehen, da die Library-Typen oft ungenau definiert sind.
   const simplified: any = nbt.simplify(result.parsed);
   
-  // 3. 'Inventory' zurückgeben (das ist das Array mit den Items)
-  return simplified.Inventory;
+  const rawInventory = simplified.Inventory as any[] || [];
+  const eq = simplified.equipment || {};
+
+  // Wir bauen das strukturierte Objekt für das Frontend
+  const structuredInventory = {
+    armor: {
+      helmet: eq.head || null,
+      chestplate: eq.chest || null,
+      leggings: eq.legs || null,
+      boots: eq.feet || null,
+    },
+    offhand: eq.offhand || null,
+    // Nur das normale Inventar (Slots 0-35)
+    items: rawInventory.filter(i => {
+      const s = Number(i.Slot);
+      return s >= 0 && s <= 35;
+    })
+  };
+
+  return structuredInventory;
 };
