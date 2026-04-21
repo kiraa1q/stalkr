@@ -1,83 +1,81 @@
 import { Rcon } from "rcon-client";
+import dotenv from "dotenv";
+import { getWorldWeather } from './nbtservice.js';
 
-export const getMcData = async (command: string) => {
-  const rcon = await Rcon.connect({
-    host: process.env.MC_HOST || "localhost",
-    port: parseInt(process.env.MC_RCON_PORT || "25575"),
-    password: process.env.MC_RCON_PASSWORD || "pass",
-  });
-
-  const response = await rcon.send(command);
-  await rcon.end();
-  return response;
-};
-
-export const getOnlinePlayers = async () => {
-  const rawStatus = await getMcData("list");
-  // Logik: Alles nach dem Doppelpunkt nehmen und bei Kommas trennen
-  const playerString = rawStatus.split(":")[1] || "";
-  return playerString.split(",").map(name => name.trim()).filter(name => name !== "");
-};
-
+dotenv.config();
 
 const serverStartTime = Date.now();
 
-export const getServerStats = async () => {
-  const rawTime = await getMcData("time query daytime");
-  const rawWetter = await getMcData("weather query");
-  const rawVersion = await getMcData("version");
-  const rawTps = await getMcData("tps");
+// --- HILFSFUNKTIONEN (Zuerst deklarieren, damit TS sie kennt) ---
 
-  // 1. Wetter-Parsing (Antwort ist oft: "Weather is: clear" oder "The weather has been set to...")
-  const weatherString = rawWetter.toLowerCase();
-  let weather = "Clear";
-  if (weatherString.includes("rain")) weather = "Rain";
-  if (weatherString.includes("thunder")) weather = "Thunder";
-
-  // 2. Versions-Parsing
-  // Die Antwort sieht oft so aus: "This server is running Paper version 1.21.4..."
-  // Wir extrahieren nur die Versionsnummer
-  const versionMatch = rawVersion.match(/\d+\.\d+(\.\d+)?/);
-  const version = versionMatch ? versionMatch[0] : "Unknown";
-
-  // 3. Uptime berechnen (Zeit seit Backend-Start)
-  const uptimeSeconds = Math.floor((Date.now() - serverStartTime) / 1000);
-  const uptime = formatUptime(uptimeSeconds);
-
-  // 4. Zeit-Parsing
-  const timeMatch = rawTime.match(/\d+/);
-  const ticks = timeMatch ? parseInt(timeMatch[0]) : 0;
-
-  return {
-    time: {
-      ticks,
-      formatted: formatMcTime(ticks),
-      isDay: ticks < 13000 || ticks > 23000
-    },
-    weather,
-    version,
-    uptime,
-    tps: parseTps(rawTps)
-  };
+const formatUptime = (seconds: number): string => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
 };
 
-// Hilfsfunktion: Uptime formatieren (z.B. "2h 15m")
-function formatUptime(seconds: number) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
+const parseTps = (raw: string): number => {
+    const match = raw.match(/\d+\.\d+/);
+    return match ? parseFloat(match[0]) : 20.0;
+};
 
-// Hilfsfunktion: TPS sicher extrahieren
-function parseTps(raw: string) {
-  const match = raw.match(/\d+\.\d+/);
-  return match ? parseFloat(match[0]) : 20.0;
-}
+const formatMcTime = (ticks: number): string => {
+    // Modulo sorgt dafür, dass wir immer im 24h Bereich bleiben
+    const hours = Math.floor((ticks / 1000 + 6) % 24);
+    const minutes = Math.floor((ticks % 1000) * 0.06);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+};
 
-// Hilfsfunktion: MC Ticks in Uhrzeit
-function formatMcTime(ticks: number) {
-  let hours = Math.floor((ticks / 1000 + 6) % 24);
-  let minutes = Math.floor((ticks % 1000) * 0.06);
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-}
+// --- RCON BASIS FUNKTION ---
+
+export const getMcData = async (command: string): Promise<string> => {
+    try {
+        const rcon = await Rcon.connect({
+            host: process.env.MC_HOST || "localhost",
+            port: parseInt(process.env.MC_PORT || "25575"),
+            password: process.env.MC_RCON_PASSWORD || "password",
+        });
+        const response = await rcon.send(command);
+        rcon.end();
+        return response;
+    } catch (error) {
+        console.error("RCON Error:", error);
+        return "error";
+    }
+};
+
+// --- HAUPTFUNKTION ---
+
+export const getServerStats = async () => {
+    // 1. Live-Daten über RCON abfragen
+    const rawTime = await getMcData("time query daytime");
+    const rawVersion = await getMcData("version");
+    const rawTps = await getMcData("tps");
+
+    // 2. Wetter über NBT (nbtservice)
+    const worldInfo = await getWorldWeather();
+
+    // 3. Zeit-Parsing (Live & Robust)
+    const timeMatch = rawTime.match(/\d+/);
+    let liveTicks = timeMatch ? parseInt(timeMatch[0]) : 0;
+    liveTicks = liveTicks % 24000; // Normalisieren auf einen Tag
+
+    // 4. Version extrahieren
+    const versionMatch = rawVersion.match(/\d+\.\d+(\.\d+)?/);
+    const version = versionMatch ? versionMatch[0] : "Unknown";
+
+    // 5. Uptime berechnen
+    const uptimeSeconds = Math.floor((Date.now() - serverStartTime) / 1000);
+
+    return {
+        time: {
+            ticks: liveTicks,
+            formatted: formatMcTime(liveTicks),
+            isDay: liveTicks < 13000 || liveTicks > 23000
+        },
+        weather: worldInfo.weather,
+        version: version,
+        uptime: formatUptime(uptimeSeconds),
+        tps: parseTps(rawTps)
+    };
+};

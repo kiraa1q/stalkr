@@ -32,3 +32,30 @@ export const getPlayerInventory = async (uuid: string) => {
 
   return structuredInventory;
 };
+
+export const getWorldWeather = async () => {
+  // Der Pfad zur level.dat (liegt direkt im Welt-Ordner)
+  const path = process.env.MC_WORLD_PATH + `/level.dat`;
+  
+  if (!fs.existsSync(path)) throw new Error("level.dat nicht gefunden");
+
+  const fileData = fs.readFileSync(path);
+  const result = await nbt.parse(fileData);
+  const simplified: any = nbt.simplify(result.parsed);
+
+  // In der level.dat liegen die Daten unter 'Data'
+  const worldData = simplified.Data;
+
+  let weather = "Clear";
+  
+  // Minecraft speichert Wetter als 1 (wahr) oder 0 (falsch)
+  if (worldData.thundering === 1 || worldData.thundering === true) {
+    weather = "Thunder";
+  } else if (worldData.raining === 1 || worldData.raining === true) {
+    weather = "Rain";
+  }
+
+  return {
+    weather
+  };
+};
