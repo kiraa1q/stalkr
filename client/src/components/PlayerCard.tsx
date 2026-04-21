@@ -1,6 +1,6 @@
-// src/components/PlayerCard.tsx
 import { useState } from 'react'
 import type { Player } from '../types'
+
 interface Props {
   player: Player
 }
@@ -19,13 +19,9 @@ export default function PlayerCard({ player }: Props) {
   return (
     <div className={`player-card ${open ? 'open' : ''} ${!player.online ? 'offline-card' : ''}`}>
 
-      {/* Header - always visible */}
       <div className="player-header" onClick={() => setOpen(o => !o)}>
         <div className="player-avatar-sm">
-          <img
-            src={`https://mc-heads.net/avatar/${player.name}/36`}
-            alt={player.name}
-          />
+          <img src={`https://mc-heads.net/avatar/${player.name}/36`} alt={player.name} />
         </div>
         <div className="player-info">
           <div className="player-name" style={!player.online ? { color: 'var(--text-mid)' } : {}}>
@@ -46,12 +42,10 @@ export default function PlayerCard({ player }: Props) {
         </div>
       </div>
 
-      {/* Body - accordion */}
       <div className="player-body">
         <div className="player-body-inner">
           <div className="inv-panel">
 
-            {/* Left: armor + skin */}
             <div className="inv-left">
               <div className="armor-col">
                 {ARMOR_SLOTS.map(slot => {
@@ -86,32 +80,22 @@ export default function PlayerCard({ player }: Props) {
               </div>
             </div>
 
-            {/* Right: vitals + stats + inventory */}
             <div className="inv-right">
-
-              {/* Vitals */}
               <div className="vitals-grid">
                 <div className="vital-box">
-                  <div className="vital-box-val" style={{ color: 'var(--red)' }}>
-                    {player.health}/20
-                  </div>
+                  <div className="vital-box-val" style={{ color: 'var(--red)' }}>{player.health}/20</div>
                   <div className="vital-box-lbl">Health</div>
                 </div>
                 <div className="vital-box">
-                  <div className="vital-box-val" style={{ color: 'var(--yellow)' }}>
-                    {player.hunger}/20
-                  </div>
+                  <div className="vital-box-val" style={{ color: 'var(--yellow)' }}>{player.hunger}/20</div>
                   <div className="vital-box-lbl">Hunger</div>
                 </div>
                 <div className="vital-box">
-                  <div className="vital-box-val" style={{ color: 'var(--green)' }}>
-                    Lv.{player.xp}
-                  </div>
+                  <div className="vital-box-val" style={{ color: 'var(--green)' }}>Lv.{player.xp}</div>
                   <div className="vital-box-lbl">XP</div>
                 </div>
               </div>
 
-              {/* Stats */}
               <div className="stats-row-mini">
                 <div className="stat-mini">
                   <div className="stat-mini-val">{player.kills}</div>
@@ -127,7 +111,6 @@ export default function PlayerCard({ player }: Props) {
                 </div>
               </div>
 
-              {/* Inventory */}
               <div>
                 <div className="inv-items-label">
                   {player.online ? 'Inventory' : 'Last Known Inventory'}
@@ -141,13 +124,12 @@ export default function PlayerCard({ player }: Props) {
                   ))}
                 </div>
               </div>
-
             </div>
+
           </div>
         </div>
       </div>
 
-      {/* Coords footer - always visible */}
       <div className="coords-footer">
         <div className="coords-label">
           {player.position.dimension}
