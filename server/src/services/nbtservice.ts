@@ -58,4 +58,40 @@ export const getWorldWeather = async () => {
   return {
     weather
   };
+
+};
+
+export const getPlayerData = async (uuid: string) => {
+  const path = process.env.MC_WORLD_PATH + `/playerdata/${uuid}.dat`;
+  if (!fs.existsSync(path)) throw new Error("Playerdata nicht gefunden");
+
+  const fileData = fs.readFileSync(path);
+  const result = await nbt.parse(fileData);
+  const simplified: any = nbt.simplify(result.parsed);
+
+  // Koordinaten sind ein Array [x, y, z]
+  const pos = simplified.Pos || [0, 0, 0];
+
+  return {
+    health: Math.round(simplified.Health || 0),
+    food: simplified.foodLevel || 0,
+    xpLevel: simplified.XpLevel || 0,
+    gamemode: simplified.playerGameType || 0, // 0=Survival, 1=Creative, etc.
+    dimension: simplified.Dimension || "minecraft:overworld",
+    position: {
+      x: Math.round(pos[0]),
+      y: Math.round(pos[1]),
+      z: Math.round(pos[2])
+    },
+    inventory: {
+        armor: {
+          helmet: simplified.equipment?.head || null,
+          chestplate: simplified.equipment?.chest || null,
+          leggings: simplified.equipment?.legs || null,
+          boots: simplified.equipment?.feet || null,
+        },
+        offhand: simplified.equipment?.offhand || null,
+        items: (simplified.Inventory as any[] || []).filter(i => Number(i.Slot) >= 0 && Number(i.Slot) <= 35)
+    }
+  };
 };

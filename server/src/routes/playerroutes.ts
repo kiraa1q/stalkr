@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getMcData } from '../services/mcservice.js';
 import { getUuidFromName } from '../services/uuidservice.js';
-import { getPlayerInventory } from '../services/nbtservice.js';
+import { getPlayerInventory, getPlayerData } from '../services/nbtservice.js';
 
 const router = Router();
 
@@ -35,4 +35,18 @@ router.get('/:name/inventory', async (req, res) => {
     });
   }
 });
+
+router.get('/:name/data', async (req, res) => {
+  try {
+    const playerName = req.params.name;
+    const uuid = await getUuidFromName(playerName);
+    const playerData = await getPlayerData(uuid);
+    
+    // Wir fügen den Namen noch hinzu
+    res.json({ name: playerName, ...playerData });
+  } catch (error: any) {
+    res.status(500).json({ error: "Datenfehler", details: error.message });
+  }
+});
+
 export default router;
