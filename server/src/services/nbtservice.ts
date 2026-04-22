@@ -1,24 +1,97 @@
 import nbt from 'prismarine-nbt';
 import fs from 'fs';
+import dotenv from 'dotenv';
 
 export const getPlayerInventory = async (uuid: string) => {
-  // Pfad anpassen (lokal auf dem Pi oder absoluter Pfad)
-  const path = `/path/to/server/world/playerdata/${uuid}.dat`;
+  const path = process.env.MC_WORLD_PATH + `/playerdata/${uuid}.dat`;
   
-  if (!fs.existsSync(path)) {
-    throw new Error(`Spieler-Datei für UUID ${uuid} nicht gefunden.`);
-  }
+  if (!fs.existsSync(path)) throw new Error("Playerdata nicht gefunden");
 
   const fileData = fs.readFileSync(path);
-  
-  // 1. NBT-Daten parsen
   const result = await nbt.parse(fileData);
-  
-  // 2. nbt.simplify() braucht nur den 'parsed'-Teil des Ergebnisses.
-  // Wir nutzen hier 'as any', um den strengen Typ-Check an dieser Stelle
-  // zu umgehen, da die Library-Typen oft ungenau definiert sind.
   const simplified: any = nbt.simplify(result.parsed);
   
-  // 3. 'Inventory' zurückgeben (das ist das Array mit den Items)
-  return simplified.Inventory;
+  const rawInventory = simplified.Inventory as any[] || [];
+  const eq = simplified.equipment || {};
+
+  // Wir bauen das strukturierte Objekt für das Frontend
+  const structuredInventory = {
+    armor: {
+      helmet: eq.head || null,
+      chestplate: eq.chest || null,
+      leggings: eq.legs || null,
+      boots: eq.feet || null,
+    },
+    offhand: eq.offhand || null,
+    // Nur das normale Inventar (Slots 0-35)
+    items: rawInventory.filter(i => {
+      const s = Number(i.Slot);
+      return s >= 0 && s <= 35;
+    })
+  };
+
+  return structuredInventory;
+};
+
+export const getWorldWeather = async () => {
+  // Der Pfad zur level.dat (liegt direkt im Welt-Ordner)
+  const path = process.env.MC_WORLD_PATH + `/level.dat`;
+  
+  if (!fs.existsSync(path)) throw new Error("level.dat nicht gefunden");
+
+  const fileData = fs.readFileSync(path);
+  const result = await nbt.parse(fileData);
+  const simplified: any = nbt.simplify(result.parsed);
+
+  // In der level.dat liegen die Daten unter 'Data'
+  const worldData = simplified.Data;
+
+  let weather = "Clear";
+  
+  // Minecraft speichert Wetter als 1 (wahr) oder 0 (falsch)
+  if (worldData.thundering === 1 || worldData.thundering === true) {
+    weather = "Thunder";
+  } else if (worldData.raining === 1 || worldData.raining === true) {
+    weather = "Rain";
+  }
+
+  return {
+    weather
+  };
+
+};
+
+export const getPlayerData = async (uuid: string) => {
+  const path = process.env.MC_WORLD_PATH + `/playerdata/${uuid}.dat`;
+  if (!fs.existsSync(path)) throw new Error("Playerdata nicht gefunden");
+
+  const fileData = fs.readFileSync(path);
+  const result = await nbt.parse(fileData);
+  const simplified: any = nbt.simplify(result.parsed);
+
+  // Koordinaten sind ein Array [x, y, z]
+  const pos = simplified.Pos || [0, 0, 0];
+
+  return {
+    health: Math.round(simplified.Health || 0),
+    food: simplified.foodLevel || 0,
+    xpLevel: simplified.XpLevel || 0,
+    gamemode: simplified.playerGameType || 0, // 0=Survival, 1=Creative, etc.
+    dimension: simplified.Dimension || "minecraft:overworld",
+    position: {
+      x: Math.round(pos[0]),
+      y: Math.round(pos[1]),
+      z: Math.round(pos[2])
+    },
+    inventory: {
+        armor: {
+          helmet: simplified.equipment?.head || null,
+          chestplate: simplified.equipment?.chest || null,
+          leggings: simplified.equipment?.legs || null,
+          boots: simplified.equipment?.feet || null,
+        },
+        offhand: simplified.equipment?.offhand || null,
+        items: (simplified.Inventory as any[] || []).filter(i => Number(i.Slot) >= 0 && Number(i.Slot) <= 35)
+    }
+  };
 };
