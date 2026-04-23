@@ -125,8 +125,10 @@ export default function ServerStatsComponent({ stats }: Props) {
       >
         <div className="stat-card">
           <div className="stat-label">World Time</div>
-          <div className="stat-value">{stats?.time ?? "—"}</div>
-          <div className="stat-sub">tick {stats?.tick ?? "—"}</div>
+          {/* Hier steht jetzt groß "Day" oder "Night" */}
+          <div className="stat-value">{stats?.isDay ? "Day" : "Night"}</div>
+          {/* Hier steht jetzt klein die Uhrzeit, z.B. "03:13" */}
+          <div className="stat-sub">{stats?.time ?? "—"}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Weather</div>

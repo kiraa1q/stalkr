@@ -11,6 +11,7 @@ export interface ServerStats {
   uptime: string;
   version: string;
   weather: string;
+  isDay: boolean; // Optional, wird in der API berechnet 
   time: string;
   tick: number;
   ram: {
