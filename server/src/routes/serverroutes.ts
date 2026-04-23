@@ -1,9 +1,15 @@
 import { Router } from 'express';
-import { getServerStats } from '../services/mcservice.js';
+import { getServerStats, sendConsoleCommand } from '../services/mcservice.js';
 import { controlServer, getServerLogs } from '../services/dockerservice.js';
+import { playerAction, getWhitelist } from '../services/playerservice.js';
+import { authenticateToken } from '../services/authservice.js';
 
 const router = Router();
 
+/**
+ * ÖFFENTLICHE ROUTE
+ * Jeder darf die Grund-Stats sehen (für das Home-Dashboard)
+ */
 router.get('/server-info', async (req, res) => {
   try {
     const stats = await getServerStats();
@@ -13,8 +19,13 @@ router.get('/server-info', async (req, res) => {
   }
 });
 
-router.post('/control', async (req, res) => {
-    const { action } = req.body; // 'start', 'stop' oder 'restart'
+/**
+ * GESCHÜTZTE ROUTEN (Nur mit Admin-Token)
+ */
+
+// Server-Steuerung (Start/Stop/Restart)
+router.post('/control', authenticateToken, async (req, res) => { // <-- Middleware hinzugefügt
+    const { action } = req.body;
     try {
         const message = await controlServer(action);
         res.json({ success: true, message });
@@ -23,12 +34,54 @@ router.post('/control', async (req, res) => {
     }
 });
 
-router.get('/logs', async (req, res) => {
+// Konsole auslesen
+router.get('/logs', authenticateToken, async (req, res) => { // <-- Middleware hinzugefügt
     try {
         const logs = await getServerLogs();
         res.json({ logs });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Whitelist anzeigen
+router.get('/whitelist', authenticateToken, async (req, res) => {
+    try {
+        const list = await getWhitelist();
+        res.json({ list });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Spieler-Aktionen (Add, Remove, Ban, Op etc.)
+router.post('/action', authenticateToken, async (req, res) => {
+    const { action, playerName } = req.body;
+    
+    if (!action || !playerName) {
+        return res.status(400).json({ error: "Missing action or playerName" });
+    }
+
+    try {
+        const result = await playerAction(action, playerName);
+        res.json({ success: true, message: result });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/command', authenticateToken, async (req, res) => {
+    const { command } = req.body;
+
+    if (!command) {
+        return res.status(400).json({ error: "Kein Befehl angegeben" });
+    }
+
+    try {
+        const output = await sendConsoleCommand(command);
+        res.json({ success: true, output });
+    } catch (error: any) {
+        res.status(500).json({ error: "Befehl fehlgeschlagen", details: error.message });
     }
 });
 

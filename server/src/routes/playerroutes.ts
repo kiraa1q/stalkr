@@ -3,6 +3,7 @@ import { getMcData } from '../services/mcservice.js';
 import { getUuidFromName } from '../services/uuidservice.js';
 import { getPlayerInventory, getPlayerData, getPlayerStats } from '../services/nbtservice.js';
 
+
 const router = Router();
 
 router.get('/status', async (req, res) => {

@@ -79,3 +79,13 @@ export const getServerStats = async () => {
         tps: parseTps(rawTps)
     };
 };
+
+// Diese Funktion schickt einen Befehl an den Minecraft Server
+export const sendConsoleCommand = async (command: string) => {
+    // Falls der User den "/" mitschickt (z.B. /op), entfernen wir ihn, 
+    // da RCON Befehle ohne Schrägstrich erwartet.
+    const cleanCommand = command.startsWith('/') ? command.substring(1) : command;
+    
+    const response = await getMcData(cleanCommand);
+    return response; // Das ist die Rückmeldung vom Server (z.B. "Made Stoner_Cookie a server operator")
+};
