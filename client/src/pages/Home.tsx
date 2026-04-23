@@ -39,7 +39,7 @@ export default function Home() {
         marginBottom: '24px',
       }}>
         <iframe
-          src="https://bluemap.kira1q.dev/"
+          src="http://localhost:8100/"
           style={{ width: '100%', height: '100%', border: 'none' }}
           title="BlueMap"
         />

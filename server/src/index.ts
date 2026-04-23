@@ -13,6 +13,8 @@ app.use(express.json());
 // Routen einbinden
 app.use('/api/players', playerRoutes);
 app.use('/api/server', serverRoutes);
+app.use('/api/logs', serverRoutes);
+app.use('/api/control', serverRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
