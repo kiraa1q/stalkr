@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getServerStats, sendConsoleCommand } from '../services/mcservice.js';
 import { controlServer, getServerLogs } from '../services/dockerservice.js';
-import { playerAction, getWhitelist } from '../services/playerservice.js';
+import { playerAction, getWhitelistWithStatus } from '../services/playerservice.js';
 import { authenticateToken } from '../services/authservice.js';
 
 const router = Router();
@@ -47,8 +47,9 @@ router.get('/logs', authenticateToken, async (req, res) => { // <-- Middleware h
 // Whitelist anzeigen
 router.get('/whitelist', authenticateToken, async (req, res) => {
     try {
-        const list = await getWhitelist();
-        res.json({ list });
+        const list = await getWhitelistWithStatus();
+        console.log("Sende an Frontend:", list); // Schau hier in dein Terminal!
+        res.json({ list }); // Das Frontend erwartet data.list
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
