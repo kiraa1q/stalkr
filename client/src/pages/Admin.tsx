@@ -6,10 +6,13 @@ import ConfigEditor from '../components/admin/ConfigEditor.tsx'
 export default function Admin() {
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    localStorage.removeItem('stalkr_token')
-    navigate('/login')
-  }
+  const handleLogout = (): void => {
+    
+    localStorage.removeItem('stalkr_token');
+    
+
+    navigate('/login', { replace: true });
+  };
 
   return (
     <div className="layout">
