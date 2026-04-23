@@ -6,6 +6,8 @@ import {
   getWhitelistWithStatus,
 } from "../services/playerservice.js";
 import { authenticateToken } from "../services/authservice.js";
+import { readProperties, writeProperties } from '../services/propservice.js';
+
 
 const router = Router();
 
@@ -104,6 +106,32 @@ router.post("/command", authenticateToken, async (req, res) => {
       .status(500)
       .json({ error: "Befehl fehlgeschlagen", details: error.message });
   }
+});
+
+
+// Alle Properties abrufen
+router.get('/properties', authenticateToken, (req, res) => {
+    try {
+        const props = readProperties();
+        res.json(props);
+    } catch (error) {
+        res.status(500).json({ error: "Konnte Properties nicht lesen" });
+    }
+});
+
+// Bestimmte Properties aktualisieren
+router.post('/properties', authenticateToken, (req, res) => {
+    try {
+        const currentProps = readProperties();
+        const updates = req.body; // Das Frontend schickt z.B. { "motd": "Neuer Name" }
+
+        const updatedProps = { ...currentProps, ...updates };
+        writeProperties(updatedProps);
+
+        res.json({ success: true, message: "Properties gespeichert. Server-Neustart erforderlich." });
+    } catch (error) {
+        res.status(500).json({ error: "Speichern fehlgeschlagen" });
+    }
 });
 
 export default router;
