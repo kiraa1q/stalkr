@@ -1,26 +1,54 @@
 // src/api.ts
 import type { ServerStats, Player } from './types'
 
-// const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
-// ── Mockdata ──────────────────────────────────────────────
+export const fetchServerStats = async (): Promise<ServerStats | null> => {
+  try {
+    const playerRes = await fetch(`${API_BASE}/players/status`);
+    // Wenn die API gar nicht antwortet (404/500), ist der Server offline
+    if (!playerRes.ok) throw new Error("Offline");
 
-const MOCK_STATS: ServerStats = {
-  online: true,
-  tps: 19.8,
-  ram: { used: 2.1, max: 4 },
-  uptime: '14h 32m',
-  time: 'Night',
-  tick: 13420,
-  weather: 'Rain',
-  version: '1.21.4',
-  players: {
-    online: 3,
-    max: 20,
-    names: ['STONER_COOKIE', 'kira1q', 'JohnPorkJ'],
-  },
-}
+    const playerData = await playerRes.json();
+    const worldRes = await fetch(`${API_BASE}/server/server-info`);
+    const worldData = await worldRes.json();
 
+    const playerMsg = playerData.message;
+    const onlineCount = parseInt(playerMsg.match(/are (\d+)/)?.[1] || "0");
+    const maxCount = parseInt(playerMsg.match(/max of (\d+)/)?.[1] || "20");
+    const namesPart = playerMsg.split(': ')[1] || "";
+
+    return {
+      online: true, // Erreichbar!
+      players: {
+        online: onlineCount,
+        max: maxCount,
+        names: namesPart ? namesPart.split(', ') : []
+      },
+      tps: worldData.tps,
+      ram: { used: "0", max: "0" },
+      uptime: worldData.uptime,
+      time: worldData.time.formatted,
+      tick: worldData.time.ticks,
+      weather: worldData.weather,
+      version: worldData.version
+    };
+  } catch (error) {
+    console.warn("Server ist offline oder API nicht erreichbar");
+    // Wir geben ein Teil-Objekt zurück, das "online: false" signalisiert
+    return {
+      online: false,
+      players: { online: 0, max: 20, names: [] },
+      tps: 0,
+      ram: { used: "0", max: "0" },
+      uptime: "0m",
+      time: "--:--",
+      tick: 0,
+      weather: "Unknown",
+      version: "---"
+    } as ServerStats;
+  }
+};
 const MOCK_PLAYERS: Player[] = [
   {
     name: 'STONER_COOKIE',
@@ -131,12 +159,7 @@ const MOCK_PLAYERS: Player[] = [
 
 // ── API Calls ─────────────────────────────────────────────
 
-export const fetchServerStats = async (): Promise<ServerStats> => {
-  // TODO: echte API
-  // const res = await fetch(`${BASE_URL}/api/server/stats`)
-  // return res.json()
-  return MOCK_STATS
-}
+
 
 export const fetchPlayers = async (): Promise<Player[]> => {
   // TODO: echte API

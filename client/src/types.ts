@@ -1,19 +1,22 @@
 // src/types.ts
 
 export interface ServerStats {
-  online: boolean
-  tps: number
-  ram: { used: number; max: number }
-  uptime: string
-  time: string
-  tick: number
-  weather: string
-  version: string
+  online: boolean;
   players: {
-    online: number
-    max: number
-    names: string[]
-  }
+    online: number;
+    max: number;
+    names: string[];
+  };
+  tps: number;
+  uptime: string;
+  version: string;
+  weather: string;
+  time: string;
+  tick: number;
+  ram: {
+    used: string;
+    max: string;
+  };
 }
 
 export interface ArmorSlot {
