@@ -57,3 +57,26 @@ export const getServerLogs = async () => {
     throw new Error(`Logs fehlgeschlagen: ${err.message}`);
   }
 };
+
+export const getContainerStats = async () => {
+    try {
+        const container = docker.getContainer(CONTAINER_NAME);
+        // Wir holen die Stats einmalig (stream: false)
+        const stats = await container.stats({ stream: false });
+
+        // Docker gibt den Wert in Bytes an, wir rechnen in GB um
+        const usedBytes = stats.memory_stats.usage || 0;
+        const limitBytes = stats.memory_stats.limit || 0;
+
+        const usedGB = (usedBytes / (1024 * 1024 * 1024)).toFixed(2);
+        const maxGB = (limitBytes / (1024 * 1024 * 1024)).toFixed(2);
+
+        return {
+            used: usedGB,
+            max: maxGB
+        };
+    } catch (err) {
+        console.error("Docker Stats Fehler:", err);
+        return { used: "0", max: "0" };
+    }
+};

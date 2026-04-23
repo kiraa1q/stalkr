@@ -26,7 +26,10 @@ export const fetchServerStats = async (): Promise<ServerStats | null> => {
         names: namesPart ? namesPart.split(', ') : []
       },
       tps: worldData.tps,
-      ram: { used: "0", max: "0" },
+      ram: { 
+        used: worldData.ram?.used ?? "0", 
+        max: worldData.ram?.max ?? "0"
+      },
       uptime: worldData.uptime,
       time: worldData.time.formatted,
       tick: worldData.time.ticks,
