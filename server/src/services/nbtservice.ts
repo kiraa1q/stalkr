@@ -95,3 +95,20 @@ export const getPlayerData = async (uuid: string) => {
     }
   };
 };
+export const getPlayerStats = (uuid: string) => {
+  const statsPath = process.env.MC_WORLD_PATH + `/stats/${uuid}.json`;
+  if (!fs.existsSync(statsPath)) return { kills: 0, deaths: 0, distance: 0 };
+
+  const statsData = JSON.parse(fs.readFileSync(statsPath, 'utf-8'));
+  const s = statsData.stats || {};
+
+  // Die Keys in Minecraft Stats sind etwas kryptisch:
+  const custom = s["minecraft:custom"] || {};
+  
+  return {
+    kills: custom["minecraft:player_kills"] || 0,
+    deaths: custom["minecraft:deaths"] || 0,
+    // Zentimeter in Kilometer umrechnen (/ 100 / 1000)
+    distance: Math.round((custom["minecraft:walk_one_cm"] || 0) / 100000) 
+  };
+};
