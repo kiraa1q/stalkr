@@ -16,6 +16,15 @@ const ARMOR_ICONS: Record<string, string> = {
 export default function PlayerCard({ player }: Props) {
   const [open, setOpen] = useState(false);
 
+  // Hilfsfunktion für Item-Icons (kannst du auch für die Offhand nutzen)
+  const getIconUrl = (material: string) => {
+    if (!material || material === 'none') return null;
+    const cleanName = material.split(":")[1]
+      .split("_")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join("_");
+    return `https://minecraft.wiki/images/Invicon_${cleanName}.png`;
+  };
   return (
     <div
       className={`player-card ${open ? "open" : ""} ${!player.online ? "offline-card" : ""}`}
@@ -58,61 +67,52 @@ export default function PlayerCard({ player }: Props) {
         <div className="player-body-inner">
           <div className="inv-panel">
             <div className="inv-left">
+              {/* Rüstungs-Spalte */}
               <div className="armor-col">
                 {ARMOR_SLOTS.map((slot) => {
                   const piece = player.armor.find((a) => a.slot === slot);
                   const isEmpty = !piece || piece.material === "none";
-
-                  // Dynamische URL generieren: Wir nehmen das Material aus dem Backend
-                  // Beispiel: minecraft:netherite_helmet -> Invicon_Netherite_Helmet.png
-                  const materialName = !isEmpty
-                    ? piece.material
-                        .split(":")[1]
-                        .split("_")
-                        .map(
-                          (word) =>
-                            word.charAt(0).toUpperCase() + word.slice(1),
-                        )
-                        .join("_")
-                    : "";
-
-                  const iconUrl = isEmpty
-                    ? ARMOR_ICONS[slot] // Fallback auf deine Standard-Icons
-                    : `https://minecraft.wiki/images/Invicon_${materialName}.png`;
+                  const iconUrl = isEmpty ? ARMOR_ICONS[slot] : getIconUrl(piece.material);
 
                   return (
-                    <div
-                      key={slot}
-                      className={`item-slot ${!isEmpty ? "has-item" : ""}`}
-                      style={{
-                        border: !isEmpty
-                          ? "1px solid rgba(255,255,255,0.2)"
-                          : "1px solid var(--border)",
-                      }}
-                    >
-                      <img
-                        src={iconUrl}
-                        style={{
-                          width: "32px",
-                          height: "32px",
-                          imageRendering: "pixelated",
-                          opacity: isEmpty ? 0.2 : 1,
-                        }}
-                        alt={slot}
-                      />
+                    <div key={slot} className={`item-slot ${!isEmpty ? "has-item" : ""}`}
+                         style={{ border: !isEmpty ? "1px solid rgba(255,255,255,0.2)" : "1px solid var(--border)" }}>
+                      <img src={iconUrl || ""} style={{ width: "32px", height: "32px", imageRendering: "pixelated", opacity: isEmpty ? 0.2 : 1 }} alt={slot} />
                     </div>
                   );
                 })}
               </div>
 
-              <div
-                className="skin-3d"
-                style={!player.online ? { opacity: 0.5 } : {}}
-              >
-                <img
-                  src={`https://visage.surgeplay.com/full/256/${player.name}`}
-                  alt={`${player.name} 3D`}
-                />
+              {/* NEU: Container für Skin + Offhand */}
+              <div className="skin-container" style={{ position: 'relative' }}>
+                <div className="skin-3d" style={!player.online ? { opacity: 0.5 } : {}}>
+                  <img src={`https://visage.surgeplay.com/full/256/${player.name}`} alt={`${player.name} 3D`} />
+                </div>
+
+                {/* DER OFFHAND SLOT */}
+                <div className="offhand-slot" style={{ position: 'absolute', bottom: '0px', right: '-60%' }}>
+                  <div className={`item-slot ${player.offhand?.material !== 'none' ? "has-item" : ""}`}
+                       style={{ 
+                         border: "1px solid var(--border)", 
+                         background: "rgba(0,0,0,0.4)",
+                         width: "60px", 
+                         height: "60px",
+                         display: 'flex',
+                         alignItems: 'center',
+                         justifyContent: 'center',
+                         borderRadius: '4px'
+                       }}>
+                    {player.offhand?.material && player.offhand.material !== 'none' ? (
+                      <img 
+                        src={getIconUrl(player.offhand.material) || ""} 
+                        style={{ width: "28px", height: "28px", imageRendering: "pixelated" }} 
+                        title={player.offhand.material}
+                      />
+                    ) : (
+                      <div style={{ opacity: 0.1, fontSize: '10px' }}>OFF</div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 

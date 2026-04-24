@@ -22,8 +22,16 @@ export interface ServerStats {
 
 export interface ArmorSlot {
   slot: 'helmet' | 'chestplate' | 'leggings' | 'boots'
-  material: 'netherite' | 'diamond' | 'iron' | 'gold' | 'leather' | 'none'
+  // Wir ändern material auf string, da Minecraft-IDs wie "minecraft:netherite_helmet" kommen
+  material: string 
   name: string
+}
+
+// Neu: Ein Interface für die Offhand (oder allgemeine Items)
+export interface InventoryItem {
+  material: string
+  count: number
+  name?: string
 }
 
 export interface Player {
@@ -36,9 +44,13 @@ export interface Player {
   xp: number
   kills: number
   deaths: number
-  distanceTraveled: number
+  distanceTraveled: string | number // String, falls du .toFixed(1) nutzt
   playtime: string
   armor: ArmorSlot[]
+  
+  // HIER DIE ERGÄNZUNG:
+  offhand: InventoryItem 
+  
   inventory: { name: string; count: number }[]
   position: { x: number; y: number; z: number; dimension: string }
   lastSeen?: string

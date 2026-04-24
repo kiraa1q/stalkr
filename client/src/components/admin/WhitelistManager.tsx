@@ -120,7 +120,7 @@ export default function WhitelistManager() {
             {/* Avatar & Name */}
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <img
-                src={`https://mc-heads.net/avatar/${player.name}/32`}
+                src={`https://mc-heads.net/avatar/${player.name}/36`}
                 alt={player.name}
                 style={{ width: "32px", height: "32px", borderRadius: "4px" }}
               />
